@@ -22,9 +22,9 @@ Get Euro rates from XML and parse it with Golang
 **XML structure**
 
 
-`<gesmes:Envelope xmlns:gesmes="http://www.gesmes.org/xml/2002-08-01" xmlns="http://www.ecb.int/vocabulary/2002-08-01/eurofxref">
-        
-        <gesmes:subject>Reference rates</gesmes:subject>
+`<Envelope>
+
+    <gesmes:subject>Reference rates</gesmes:subject>
         <gesmes:Sender>
                 <gesmes:name>European Central Bank</gesmes:name>
         </gesmes:Sender>
@@ -38,7 +38,7 @@ Get Euro rates from XML and parse it with Golang
                         <Cube currency='RON' rate='4.7448'/>
                 </Cube>
         </Cube>
-</gesmes:Envelope>`
+</Envelope>`
 
 ---
 
