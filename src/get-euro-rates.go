@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bytes"
+	"encoding/xml"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -9,37 +11,62 @@ import (
 	"time"
 )
 
-func main() {
-
-	var timestamp = strconv.FormatInt(time.Now().UTC().UnixNano(), 10)
-	var urlRates = "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml?" + timestamp
-
-	fmt.Println("getting data from: " + urlRates)
-
-	if xmlStr, err := getXML(urlRates); err != nil {
-		log.Printf("Failed to get XML: %v", err)
-	} else {
-		log.Println(xmlStr)
-
-		// TODO: get rates
-	}
+// XML defined structures
+type Envelope struct {
+	Cube   []Items `xml:"Cube>Cube>Cube"`
 }
 
-func getXML(url string) (string, error) {
+type Items struct {
+	Curency     string   `xml:"currency,attr"`
+	Rate 		string   `xml:"rate,attr"`
+}
+
+func main() {
+
+	urlRates := "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml"
+
+	// no cache
+	timestamp := strconv.FormatInt(time.Now().UTC().UnixNano(), 10)
+
+	urlRates = urlRates + "?" + timestamp
+	fmt.Println("data from: " + urlRates + "\n")
+
+	rssFeed := &Envelope{}
+	xmlDoc := getXML(urlRates)
+
+	parseXML(xmlDoc, &rssFeed)
+
+	for _, item := range rssFeed.Cube {
+		fmt.Println("Country Code: " + item.Curency + " \t Rate: " + item.Rate)
+		// do whatever you want with the data, add to a table for example
+	}
+
+}
+
+func getXML(url string) []byte {
+
 	resp, err := http.Get(url)
 	if err != nil {
-		return "", fmt.Errorf("GET error: %v", err)
+		log.Fatalf("unable to GET '%s': %s", url, err)
 	}
+
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("Status error: %v", resp.StatusCode)
-	}
+	body, err := ioutil.ReadAll(resp.Body)
 
-	data, errr := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return "", fmt.Errorf("Read body: %v", errr)
+		log.Fatalf("unable to read body '%s': %s", url, err)
 	}
 
-	return string(data), nil
+	return body
+}
+
+func parseXML(xmlDoc []byte, target interface{}) {
+
+	reader := bytes.NewReader(xmlDoc)
+	decoder := xml.NewDecoder(reader)
+
+	if err := decoder.Decode(target); err != nil {
+		log.Printf("unable to parse XML '%s':\n%s", err, xmlDoc)
+	}
 }
