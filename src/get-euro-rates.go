@@ -13,12 +13,12 @@ import (
 
 // XML defined structures
 type Envelope struct {
-	Cube   []Items `xml:"Cube>Cube>Cube"`
+	Cube []Items `xml:"Cube>Cube>Cube"`
 }
 
 type Items struct {
-	Curency     string   `xml:"currency,attr"`
-	Rate 		string   `xml:"rate,attr"`
+	Curency string `xml:"currency,attr"`
+	Rate    string `xml:"rate,attr"`
 }
 
 func main() {
@@ -31,16 +31,13 @@ func main() {
 	urlRates = urlRates + "?" + timestamp
 	fmt.Println("data from: " + urlRates + "\n")
 
-	rssFeed := &Envelope{}
 	xmlDoc := getXML(urlRates)
-
-	parseXML(xmlDoc, &rssFeed)
+	rssFeed := parseXML(xmlDoc)
 
 	for _, item := range rssFeed.Cube {
 		fmt.Println("Country Code: " + item.Curency + " \t Rate: " + item.Rate)
 		// do whatever you want with the data, add to a table for example
 	}
-
 }
 
 func getXML(url string) []byte {
@@ -61,12 +58,16 @@ func getXML(url string) []byte {
 	return body
 }
 
-func parseXML(xmlDoc []byte, target interface{}) {
+func parseXML(xmlDoc []byte) Envelope {
+
+	envelope := Envelope{}
 
 	reader := bytes.NewReader(xmlDoc)
 	decoder := xml.NewDecoder(reader)
 
-	if err := decoder.Decode(target); err != nil {
+	if err := decoder.Decode(&envelope); err != nil {
 		log.Printf("unable to parse XML '%s':\n%s", err, xmlDoc)
 	}
+
+	return envelope
 }
